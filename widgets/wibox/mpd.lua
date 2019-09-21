@@ -19,14 +19,9 @@ local xresources = require("beautiful.xresources")
 local dpi        = xresources.apply_dpi
 local timer      = require "gears.timer"
 local markup     = require "cuddly-succotash.util.markup"
+local curry      = require ("cuddly-succotash.util.functional").curry
 
 local mpd = nil
-
-local function curry (fun, arg)
-  return function (...)
-    fun (arg, ...)
-  end
-end
 
 local function get_status(cmd)
 
