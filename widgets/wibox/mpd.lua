@@ -200,7 +200,7 @@ local function factory (args, theme)
   mpd.timeout       = args.timeout or 2
   mpd.password      = (args.password and #args.password > 0 and
                          string.format("password %s\\n", args.password)) or ""
-  mpd.host          = args.host or os.getenv("MPD_HOST") or "127.0.0.1"
+  mpd.host          = args.host or os.getenv("MPD_HOST") or "localhost"
   mpd.port          = args.port or os.getenv("MPD_PORT") or "6600"
   mpd.music_dir     = args.music_dir or os.getenv("HOME") .. "/Music"
   mpd.cover_pattern = args.cover_pattern or "*\\.(jpg|jpeg|png|gif)$"
