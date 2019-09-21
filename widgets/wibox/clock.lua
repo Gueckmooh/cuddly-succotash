@@ -101,7 +101,6 @@ function show_cal (clock, timeout, month, year)
 
   local today = tonumber (os.date ("%d"))
   local icon = clock.icons .. today .. ".png"
-  print (icon)
   clock.notification = naughty.notify {
     preset  = notification_preset,
     icon    = icon,
