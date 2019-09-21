@@ -228,7 +228,7 @@ local function factory (args, theme)
 
   mpd.widget_icon = wibox.widget {
     image = mpd.icon,
-    resize = false,
+    resize = true,
     widget = wibox.widget.imagebox
   }
 
