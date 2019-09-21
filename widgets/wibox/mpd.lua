@@ -284,8 +284,7 @@ local function get_instance ()
   return mpd
 end
 
-local widget =
-  {
+local widget = {
     factory = factory,
     get_instance = get_instance
   }
