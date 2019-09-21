@@ -143,13 +143,24 @@ local function update (mpd)
     local artist = infos.artist
     local color1 = mpd.color_pause
     local color2 = theme.fg_normal
-    text:set_markup (markup.markup
-             {
-               fg = color2,
-               font = theme.font,
-               markup.markup {fg = color1, artist} .. " " .. title
-             }
+    if infos.title ~= "N/A" then
+      text:set_markup (markup.markup
+                       {
+                         fg = color2,
+                         font = theme.font,
+                         markup.markup {fg = color1, artist} .. " " .. title
+                       }
       )
+    else
+      local filename = infos.file
+      text:set_markup (markup.markup
+                       {
+                         fg = color1,
+                         font = theme.font,
+                         filename
+                       }
+      )
+    end
     icon:set_image (mpd.icon_pause)
   else
     text:set_text ("")
