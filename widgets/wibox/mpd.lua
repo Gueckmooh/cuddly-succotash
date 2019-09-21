@@ -20,6 +20,8 @@ local dpi        = xresources.apply_dpi
 local timer      = require "gears.timer"
 local markup     = require "cuddly-succotash.util.markup"
 
+local mpd = nil
+
 local function curry (fun, arg)
   return function (...)
     fun (arg, ...)
@@ -187,7 +189,7 @@ local function notify (mpd)
 end
 
 local function factory (args, theme)
-  local mpd         = {}
+  mpd               = {}
 
   mpd.icon          = theme.widget_music or nil
   mpd.icon_on       = theme.widget_music_on or theme.widget_music or nil
@@ -249,12 +251,14 @@ local function factory (args, theme)
 
   -- {{{ SETUP OF THE TIMER
   local update = curry (update, mpd)
+  mpd.update = update
   mpd.timer = timer {timeout = mpd.timeout}
   mpd.timer:start ()
   mpd.timer:connect_signal ("timeout", update)
   -- }}}
 
   local notify = curry (notify, mpd)
+  mpd.notify = notify
   mpd.notification = nil
 
   mpd.widget:connect_signal("mouse::enter", notify)
@@ -265,4 +269,14 @@ local function factory (args, theme)
 
 end
 
-return factory
+local function get_instance ()
+  return mpd
+end
+
+local widget =
+  {
+    factory = factory,
+    get_instance = get_instance
+  }
+
+return widget
