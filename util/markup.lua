@@ -1,4 +1,18 @@
+local format = string.format
+
 local markup = {}
+
+function markup.bold(text)      return format("<b>%s</b>",         text) end
+function markup.italic(text)    return format("<i>%s</i>",         text) end
+function markup.strike(text)    return format("<s>%s</s>",         text) end
+function markup.underline(text) return format("<u>%s</u>",         text) end
+function markup.monospace(text) return format("<tt>%s</tt>",       text) end
+function markup.big(text)       return format("<big>%s</big>",     text) end
+function markup.small(text)     return format("<small>%s</small>", text) end
+
+function markup.color(fg, bg, text)
+    return format("<span foreground='%s' background='%s'>%s</span>", fg, bg, text)
+end
 
 function markup.markup (args)
   local fg   = args.fg and string.format ("foreground='%s'", args.fg) or ""
