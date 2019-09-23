@@ -41,7 +41,7 @@ local function update (pacman)
 
   if #pacman.packages == 0 then
     text:set_text ("")
-    wicon.set_image (pacman.icon)
+    wicon:set_image (pacman.icon)
   else
     text:set_text (tostring (#pacman.packages))
     wicon:set_image (pacman.icon_avail)
