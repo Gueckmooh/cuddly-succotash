@@ -48,13 +48,7 @@ end
 
 local pretty = require "pl.pretty"
 
-local function update (cpu)
-  local text = cpu.widget_text
-  get_cpu_info (cpu)
-  text:set_markup (string.format ("%d%%", math.ceil(cpu.core[0].usage)))
-end
-
-local function notify (cpu)
+local function get_notification_text (cpu)
   local tab = {}
 
   for k, v in ipairs (cpu.core) do
@@ -67,13 +61,26 @@ local function notify (cpu)
     }
     tab[k] = table.concat (t)
   end
+  return table.concat (tab)
+end
 
+local function update (cpu)
+  local text = cpu.widget_text
+  get_cpu_info (cpu)
+  text:set_markup (string.format ("%d%%", math.ceil(cpu.core[0].usage)))
+
+ if cpu.notification then
+   naughty.replace_text (cpu.notification, "CPU status",
+                         get_notification_text (cpu))
+ end
+end
+
+local function notify (cpu)
   cpu.notification = naughty.notify {
     preset = cpu.notification_preset,
     title = "CPU status",
-    text = table.concat (tab)
+    text = get_notification_text (cpu)
   }
-
 end
 
 local function factory (args, theme)
@@ -136,7 +143,7 @@ local function factory (args, theme)
 
   cpu.widget:connect_signal("mouse::enter", notify)
   cpu.widget:connect_signal("mouse::leave", function()
-                                  naughty.destroy(cpu.notification) end)
+                              naughty.destroy(cpu.notification) end)
 
   return cpu
 end
