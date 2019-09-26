@@ -57,36 +57,66 @@ local function update (pulseaudio)
 
 end
 
+local function update_widget (pulseaudio)
+  if pulseaudio.mute then
+    pulseaudio.widget_text:set_markup (
+      markup.markup {
+        fg = pulseaudio.color_mute,
+        string.format ("%d%%", math.ceil(pulseaudio.volume))
+      }
+    )
+    pulseaudio.widget_icon:set_image (pulseaudio.icon_mute)
+  else
+    pulseaudio.widget_text:set_markup (
+      markup.markup {
+        string.format ("%d%%", math.ceil(pulseaudio.volume))
+      }
+    )
+    if pulseaudio.volume > 50 then
+      pulseaudio.widget_icon:set_image (pulseaudio.icon_high)
+    elseif pulseaudio.volume > 0 then
+      pulseaudio.widget_icon:set_image (pulseaudio.icon_low)
+    else
+      pulseaudio.widget_icon:set_image (pulseaudio.icon_no)
+    end
+  end
+end
+
 local function increase (pulseaudio, vol)
   local vol = pulseaudio.volume + vol
   if vol > 100 then vol = 100	end
 	if vol < 0   then vol = 0	  end
-
+  pulseaudio.volume = vol
 	vol = (vol/100) * 0x10000
   cmd = string.format ("pacmd set-sink-volume %s 0x%x", pulseaudio.default_sink, math.ceil (vol))
 
-	awful.spawn.with_shell (cmd, function () update (pulseaudio) end)
+	awful.spawn.with_shell (cmd)
+  update_widget (pulseaudio)
 end
 
 local function decrease (pulseaudio, vol)
   local vol = pulseaudio.volume - vol
   if vol > 100 then vol = 100	end
 	if vol < 0   then vol = 0	  end
+  pulseaudio.volume = vol
 
 	vol = (vol/100) * 0x10000
   cmd = string.format ("pacmd set-sink-volume %s 0x%x", pulseaudio.default_sink, math.ceil (vol))
 
-	awful.spawn.with_shell (cmd, function () update (pulseaudio) end)
+	awful.spawn.with_shell (cmd)
+  update_widget (pulseaudio)
 end
 
 local function set_volume (pulseaudio, vol)
   if vol > 100 then vol = 100	end
 	if vol < 0   then vol = 0	  end
+  pulseaudio.volume = vol
 
 	vol = (vol/100) * 0x10000
   cmd = string.format ("pacmd set-sink-volume %s 0x%x", pulseaudio.default_sink, math.ceil (vol))
 
-	awful.spawn.with_shell (cmd, function () update (pulseaudio) end)
+	awful.spawn.with_shell (cmd)
+  update_widget (pulseaudio)
 end
 
 local function toggle_mute (pulseaudio)
@@ -96,7 +126,10 @@ local function toggle_mute (pulseaudio)
 	else
     cmd = cmd .. "1"
 	end
-  awful.spawn.with_shell (cmd, function () update (pulseaudio) end)
+
+  pulseaudio.mute = not pulseaudio.mute
+  awful.spawn.with_shell (cmd)
+  update_widget (pulseaudio)
 end
 
 local function factory (args, theme)
