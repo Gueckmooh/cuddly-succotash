@@ -23,7 +23,7 @@ local curry      = require ("cuddly-succotash.util.functional").curry
 
 local mpd = nil
 
-local function get_status(cmd)
+local function get_status(stdout, stderr, reason, exit_code)
 
   mpd_now = {
     random_mode  = false,
@@ -45,9 +45,7 @@ local function get_status(cmd)
     elapsed      = "N/A"
   }
 
-  local f = io.popen (cmd, "r")
-  local lines = f:read "*a"
-  f:close ()
+  local lines = stdout
 
   for line in string.gmatch(lines, "[^\n]+") do
     for k, v in string.gmatch(line, "([%w]+):[%s](.*)$") do
@@ -103,64 +101,69 @@ local function update (mpd)
   local icon  = mpd.widget_icon
   local text  = mpd.widget_text
 
-  mpd.infos   = get_status (mpd.cmd)
-  mpd.cover   = get_cover (mpd) or mpd.default_art
-  local infos = mpd.infos
-  local theme = mpd.theme
-  if infos.state == "play"
-  then
-    if infos.title ~= "N/A" then
-      local title  = infos.title
-      local artist = infos.artist
-      local color1 = mpd.color_play
-      local color2 = theme.fg_normal
-      text:set_markup (markup.markup
-             {
-               fg = color2,
-               font = theme.font,
-               markup.markup {fg = color1, artist} .. " " .. title
-             }
-      )
-    else
-      local filename = infos.file
-      text:set_markup (markup.markup
-             {
-               fg = color2,
-               font = theme.font,
-               filename
-             }
-      )
-    end
-    icon:set_image (mpd.icon_on)
-  elseif infos.state == "pause"
-  then
-    local title  = infos.title
-    local artist = infos.artist
-    local color1 = mpd.color_pause
-    local color2 = theme.fg_normal
-    if infos.title ~= "N/A" then
-      text:set_markup (markup.markup
-                       {
-                         fg = color2,
-                         font = theme.font,
-                         markup.markup {fg = color1, artist} .. " " .. title
-                       }
-      )
-    else
-      local filename = infos.file
-      text:set_markup (markup.markup
-                       {
-                         fg = color1,
-                         font = theme.font,
-                         filename
-                       }
-      )
-    end
-    icon:set_image (mpd.icon_pause)
-  else
-    text:set_text ("")
-    icon:set_image (mpd.icon)
-  end
+  awful.spawn.easy_async (
+    mpd.cmd,
+    function (stdout, stderr, reason, exit_code)
+
+      mpd.infos   = get_status (stdout, stderr, reason, exit_code)
+      mpd.cover   = get_cover (mpd) or mpd.default_art
+      local infos = mpd.infos
+      local theme = mpd.theme
+      if infos.state == "play"
+      then
+        if infos.title ~= "N/A" then
+          local title  = infos.title
+          local artist = infos.artist
+          local color1 = mpd.color_play
+          local color2 = theme.fg_normal
+          text:set_markup (markup.markup
+                           {
+                             fg = color2,
+                             font = theme.font,
+                             markup.markup {fg = color1, artist} .. " " .. title
+                           }
+          )
+        else
+          local filename = infos.file
+          text:set_markup (markup.markup
+                           {
+                             fg = color2,
+                             font = theme.font,
+                             filename
+                           }
+          )
+        end
+        icon:set_image (mpd.icon_on)
+      elseif infos.state == "pause"
+      then
+        local title  = infos.title
+        local artist = infos.artist
+        local color1 = mpd.color_pause
+        local color2 = theme.fg_normal
+        if infos.title ~= "N/A" then
+          text:set_markup (markup.markup
+                           {
+                             fg = color2,
+                             font = theme.font,
+                             markup.markup {fg = color1, artist} .. " " .. title
+                           }
+          )
+        else
+          local filename = infos.file
+          text:set_markup (markup.markup
+                           {
+                             fg = color1,
+                             font = theme.font,
+                             filename
+                           }
+          )
+        end
+        icon:set_image (mpd.icon_pause)
+      else
+        text:set_text ("")
+        icon:set_image (mpd.icon)
+      end
+  end)
 end
 
 local function notify (mpd)
