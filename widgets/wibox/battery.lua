@@ -21,10 +21,6 @@ local function update (battery)
   local matching_str = [[([^:]*): (%a*), (%d?%d?%d?)%%(.*)// ([^:]*): ([a-z-]*)]]
   local theme        = battery.theme
 
-  -- local pfile = io.popen (cmd, "r")
-  -- local line = pfile:read "*l"
-  -- pfile:close ()
-
   awful.spawn.easy_async_with_shell (
     cmd,
     function (stdout, stderr, reason, exit_code)

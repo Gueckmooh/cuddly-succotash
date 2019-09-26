@@ -106,7 +106,27 @@ local function update (mpd)
     function (stdout, stderr, reason, exit_code)
 
       mpd.infos   = get_status (stdout, stderr, reason, exit_code)
-      mpd.cover   = get_cover (mpd) or mpd.default_art
+
+      ------------------------------ COVER ------------------------------
+
+      local music_dir     = mpd.music_dir
+      local infos         = mpd.infos
+      local cover_pattern = mpd.cover_pattern
+      local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
+      local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
+                                          path:gsub("'", "'\\''"), cover_pattern)
+
+      awful.spawn.easy_async_with_shell (
+        cover,
+        function (stdout, stderr, reason, exit_code)
+          local icon = nil
+          local l = stdout
+          icon = l:gsub ("\n", "")
+          if #icon == 0 then icon = nil end
+          mpd.cover   = icon or mpd.default_art
+      end)
+
+      -------------------------------------------------------------------
       local infos = mpd.infos
       local theme = mpd.theme
       if infos.state == "play"

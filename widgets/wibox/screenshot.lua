@@ -37,7 +37,7 @@ local function factory (args, theme)
   screenshot.theme = theme
 
   screenshot.notification = nil
-  screenshot.screenshot_dir = os.getenv ("HOME") .. "/Images/screenshots"
+  screenshot.screenshot_dir = args.screenshot_dir or os.getenv ("HOME") .. "/Images/screenshots"
 
   screenshot.notification_preset = args.notification_preset or {
     title = "Screenshot taken",
