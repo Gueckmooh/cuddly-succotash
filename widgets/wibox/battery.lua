@@ -21,45 +21,50 @@ local function update (battery)
   local matching_str = [[([^:]*): (%a*), (%d?%d?%d?)%%(.*)// ([^:]*): ([a-z-]*)]]
   local theme        = battery.theme
 
-  local pfile = io.popen (cmd, "r")
-  local line = pfile:read "*l"
-  pfile:close ()
+  -- local pfile = io.popen (cmd, "r")
+  -- local line = pfile:read "*l"
+  -- pfile:close ()
 
-  local _, status, charge, remain, _, plugged = string.match (line, matching_str)
-  plugged = plugged == "on-line"
-  charge = tonumber (charge)
+  awful.spawn.easy_async_with_shell (
+    cmd,
+    function (stdout, stderr, reason, exit_code)
+      local line = stdout
+      local _, status, charge, remain, _, plugged = string.match (line, matching_str)
+      plugged = plugged == "on-line"
+      charge = tonumber (charge)
 
-  battery.infos = {
-    status = status,
-    charge = charge,
-    remain = remain:sub(3),
-    plugged = plugged
-  }
+      battery.infos = {
+        status = status,
+        charge = charge,
+        remain = remain:sub(3),
+        plugged = plugged
+      }
 
-  local fg   = theme.fg_normal
-  local icon = nil
+      local fg   = theme.fg_normal
+      local icon = nil
 
-  if status == "Unknown" then return end
-  if plugged then
-    icon = battery.icon_charging
-  else
-    if charge > 70 then
-      icon = battery.icon_full
-    elseif charge > 30 then
-      icon = battery.icon_low
-    else
-      icon = battery.icon_empty
-      fg = theme.fg_urgent
-    end
-  end
-  local message = markup.markup {
-      fg = fg,
-      font = theme.font,
-      string.format ("%d%%", charge)
-  }
+      if status == "Unknown" then return end
+      if plugged then
+        icon = battery.icon_charging
+      else
+        if charge > 70 then
+          icon = battery.icon_full
+        elseif charge > 30 then
+          icon = battery.icon_low
+        else
+          icon = battery.icon_empty
+          fg = theme.fg_urgent
+        end
+      end
+      local message = markup.markup {
+        fg = fg,
+        font = theme.font,
+        string.format ("%d%%", charge)
+      }
 
-  text:set_markup (message)
-  wicon:set_image (icon)
+      text:set_markup (message)
+      wicon:set_image (icon)
+  end)
 end
 
 local function notify (battery)

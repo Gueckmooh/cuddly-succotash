@@ -10,14 +10,11 @@ local timer           = require "gears.timer"
 
 local pacman = nil
 
-local function get_packages ()
-  local cmd = "pacman -Qu"
-  local pfile = io.popen (cmd)
-  local lines = pfile:read ("*a")
-  pfile:close ()
+local function get_packages (stdout, stderr, reason, exit_code)
+  -- local cmd = "pacman -Qu"
 
   local l = {}
-  for line in string.gmatch(lines, "[^\n]+") do
+  for line in string.gmatch(stdout, "[^\n]+") do
     local pack, from, to = string.match (line, "^([^ ]*) ([^ ]*) %-> ([^ ]*)$")
     l[#l+1] = {pack = pack, from = from, to = to}
   end
@@ -37,18 +34,24 @@ end
 
 
 local function update (pacman)
-  pacman.packages = get_packages ()
+  local cmd = "pacman -Qu"
+  awful.spawn.easy_async (
+    cmd,
+    function (stdout, stderr, reason, exit_code)
 
-  local text = pacman.widget_text
-  local wicon = pacman.widget_icon
+      pacman.packages = get_packages (stdout, stderr, reason, exit_code)
 
-  if #pacman.packages == 0 then
-    text:set_text ("")
-    wicon:set_image (pacman.icon)
-  else
-    text:set_text (tostring (#pacman.packages))
-    wicon:set_image (pacman.icon_avail)
-  end
+      local text = pacman.widget_text
+      local wicon = pacman.widget_icon
+
+      if #pacman.packages == 0 then
+        text:set_text ("")
+        wicon:set_image (pacman.icon)
+      else
+        text:set_text (tostring (#pacman.packages))
+        wicon:set_image (pacman.icon_avail)
+      end
+  end)
 end
 
 local function notify (pacman)
