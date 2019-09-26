@@ -15,7 +15,8 @@ local function shot (screenshot, opt)
   local opt = opt or ""
   local dir = screenshot.screenshot_dir .. "/" .. os.date ("%F") .. "-screenshots"
   local cmd = string.format ([[scrot "%s/%%Y-%%m-%%d-%%T-screenshot.png" %s -e 'echo $f']],
-  dir, opt)
+    dir, opt)
+  print (cmd)
   if not path.isdir (dir) then path.mkdir (dir) end
   local pfile = io.popen (cmd)
   local line = pfile:read "*l"
@@ -25,7 +26,7 @@ local function shot (screenshot, opt)
 end
 
 local function shot_and_notify (screenshot, opt)
-  local file = shot (screenshot)
+  local file = shot (screenshot, opt)
   local basename = file:match ("[^/]*$")
 
   screenshot.notification = naughty.notify {
@@ -53,7 +54,7 @@ local function factory (args, theme)
   local shot = curry (shot_and_notify, screenshot)
   screenshot.shot = shot
 
-  local shot_s = curry (shot, screenshot, "-s")
+  local shot_s = curry (shot, "-s")
   screenshot.shot_s = shot_s
 
   return screenshot
