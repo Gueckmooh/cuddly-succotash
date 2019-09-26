@@ -11,29 +11,25 @@ local path            = require "cuddly-succotash.util.path"
 
 local screenshot = nil
 
-local function shot (screenshot, opt)
+local function shot_and_notify (screenshot, opt)
   local opt = opt or ""
   local dir = screenshot.screenshot_dir .. "/" .. os.date ("%F") .. "-screenshots"
-  local cmd = string.format ([[scrot "%s/%%Y-%%m-%%d-%%T-screenshot.png" %s -e 'echo $f']],
-    dir, opt)
-  print (cmd)
+  local filename = os.date ("%Y-%m-%d-%T"):gsub(":","-") .. "-screenshot.png"
+  local cmd = string.format ([[sleep 0.1; scrot "%s/%s" %s]],
+    dir, filename, opt)
   if not path.isdir (dir) then path.mkdir (dir) end
-  local pfile = io.popen (cmd)
-  local line = pfile:read "*l"
-  pfile:close ()
 
-  return line
-end
+  awful.spawn.easy_async_with_shell (
+    cmd,
+    function (stdout, stderr, reason, exit_code)
+      if exit_code ~= 0 then return end
 
-local function shot_and_notify (screenshot, opt)
-  local file = shot (screenshot, opt)
-  local basename = file:match ("[^/]*$")
-
-  screenshot.notification = naughty.notify {
-    preset = screenshot.notification_preset,
-    text = basename,
-    icon = file
-  }
+      screenshot.notification = naughty.notify {
+        preset = screenshot.notification_preset,
+        text = filename,
+        icon = dir .. "/" .. filename
+      }
+  end)
 end
 
 local function factory (args, theme)
