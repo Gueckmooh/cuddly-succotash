@@ -70,6 +70,8 @@ local function notify (battery)
     message = "Oops.."
   elseif infos.status == "Charging" or infos.status == "Discharging" then
     message = infos.remain
+  elseif infos.status == "Full" then
+    return
   end
 
   battery.notification = naughty.notify {
@@ -98,7 +100,7 @@ local function factory (args, theme)
 
   battery.timeout = args.timeout or 2
   battery.theme = theme
-  battery.notification = {}
+  battery.notification = nil
 
   -- {{{ SETUP OF THE WIDGET
   battery.widget_text = wibox.widget {
