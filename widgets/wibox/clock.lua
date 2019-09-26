@@ -95,7 +95,7 @@ function getdate(month, year, offset)
 end
 
 
-function show_cal (clock, timeout, month, year)
+function show_cal (clock, month, year)
   local notification_preset = clock.notification_preset
   notification_preset.text = table.concat(build_cal(clock, month, year))
 
@@ -104,7 +104,6 @@ function show_cal (clock, timeout, month, year)
   clock.notification = naughty.notify {
     preset  = notification_preset,
     icon    = icon,
-    timeout = timeout or notification_preset.timeout or 5
   }
 end
 
@@ -118,8 +117,11 @@ local function factory (args, theme)
   clock.notification = {}
 
   clock.notification_preset = args.notification_preset or {
-    font = "Monospace 10", fg = theme.fg_normal, bg = theme.bg_normal
-                                                          }
+    bg = theme.bg_normal,
+    fg = theme.fg_normal,
+    font = "Monospace 10",
+    timeout = 0
+  }
 
   -- {{{ SETUP OF THE WIDGET
   clock.widget_text = wibox.widget {
@@ -147,7 +149,7 @@ local function factory (args, theme)
   local function notify ()
     local current_month = tonumber (os.date ("%m"))
     local current_year  = tonumber (os.date ("%Y"))
-    show_cal (10, current_month, current_year)
+    show_cal (current_month, current_year)
   end
 
   clock.notify = notify

@@ -81,9 +81,8 @@ local function notify (pacman)
   end
   local message = table.concat (t)
   pacman.notification = naughty.notify {
-    title = "Packages to upgrade",
+    preset = pacman.notification_preset,
     text = message,
-    font = "Monospace 10",
   }
 end
 
@@ -102,6 +101,14 @@ local function factory (args, theme)
   -- pacman.color1 = "#37364c"
   pacman.color1 = "#99a6c4"
   pacman.color2 = "#93014a"
+
+  pacman.notification_preset = args.notification_preset or {
+    title = "Packages to upgrade",
+    bg = theme.bg_normal,
+    fg = theme.fg_normal,
+    font = "Monospace 10",
+    timeout = 0
+  }
 
   -- {{{ SETUP OF THE WIDGET
   pacman.widget_text = wibox.widget {
