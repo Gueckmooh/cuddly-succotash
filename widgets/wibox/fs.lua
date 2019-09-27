@@ -49,8 +49,8 @@ end
 
 
 local function update (fs)
-  local cmd = "df -h"
-  awful.spawn.easy_async (
+  local cmd = "LANG= df -h"
+  awful.spawn.easy_async_with_shell (
     cmd,
     function (stdout, stderr, reason, exit_code)
       fs.infos = {}
