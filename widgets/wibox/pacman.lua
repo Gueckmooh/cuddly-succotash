@@ -24,7 +24,7 @@ end
 local function string_diff (str1, str2)
   local l = 1
   for i = 1,#str1 do
-    if str1:sub(i,i) == "." or str1:sub(i,i) == "-" then l = i+1 end
+    if str1:sub(i,i) == "." or str1:sub(i,i) == "-" or str1:sub(i,i) == "+" then l = i+1 end
     if str1:sub(i,i) ~= str2:sub(i,i) then
       return l
     end
