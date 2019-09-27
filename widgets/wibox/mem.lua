@@ -40,15 +40,15 @@ local function get_mem_str (value)
   local n = 1
   if v > 10000 then
     n = n + 1
-    v = v / 1000
+    v = v / 1024
   end
   if v > 10000 then
     n = n + 1
-    v = v / 1000
+    v = v / 1024
   end
   if v > 10000 then
     n = n + 1
-    v = v / 1000
+    v = v / 1024
   end
 
   local units = {"kB", "MB", "GB", "TB"}
@@ -59,17 +59,26 @@ local function get_notification_text (mem)
   local tab = {}
   local t = {}
 
+  local mem_used = get_mem_str (mem.mem_used)
+  local mem_total = get_mem_str (mem.mem_total)
+
+  local swap_used = get_mem_str (mem.swap_used)
+  local swap_total = get_mem_str (mem.swap_total)
+
+  local l1 = math.max (mem_used:len (), swap_used:len ())
+  local l2 = math.max (mem_total:len (), swap_total:len ())
+
   t = {
     string.format ("Mem : ", k),
     progress.get_bar (mem.mem_percent, 40),
-    string.format ("%6.2f%% - %s\n", mem.mem_percent, get_mem_str (mem.mem_used))
+    string.format ("%6.2f%% - [%"..l1.."s/%"..l2.."s]\n", mem.mem_percent, mem_used, mem_total)
   }
   tab[1] = table.concat (t)
 
   t = {
     string.format ("Swap: ", k),
     progress.get_bar (mem.swap_percent, 40),
-    string.format ("%6.2f%% - %s", mem.swap_percent, get_mem_str (mem.swap_used))
+    string.format ("%6.2f%% - [%"..l1.."s/%"..l2.."s]", mem.swap_percent, swap_used, swap_total)
   }
   tab[2] = table.concat (t)
 
