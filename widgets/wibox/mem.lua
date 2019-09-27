@@ -88,7 +88,13 @@ end
 local function update (mem)
   local text = mem.widget_text
   get_mem_info (mem)
-  text:set_markup (string.format ("%d%%", math.ceil(mem.mem_percent)))
+  text:set_markup (
+    markup.markup {
+      fg = mem.theme.fg_normal,
+      font = mem.theme.font,
+      string.format ("%d%%", math.ceil(mem.mem_percent))
+    }
+  )
 
  if mem.notification then
    naughty.replace_text (mem.notification, "Memory status",

@@ -68,7 +68,13 @@ local function update (fs)
           }
         end
         if mounted == "/home" then
-          fs.widget_text:set_text (string.format ("%s%%", percent))
+          fs.widget_text:set_markup (
+            markup.markup {
+              fg = fs.theme.fg_normal,
+              font = fs.theme.font,
+              string.format ("%s%%", percent)
+            }
+          )
         end
       end
   end)

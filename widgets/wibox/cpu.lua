@@ -67,7 +67,13 @@ end
 local function update (cpu)
   local text = cpu.widget_text
   get_cpu_info (cpu)
-  text:set_markup (string.format ("%d%%", math.ceil(cpu.core[0].usage)))
+  text:set_markup (
+    markup.markup {
+      fg = cpu.theme.fg_normal,
+      font = cpu.theme.font,
+      string.format ("%d%%", math.ceil(cpu.core[0].usage))
+    }
+  )
 
  if cpu.notification then
    naughty.replace_text (cpu.notification, "CPU status",

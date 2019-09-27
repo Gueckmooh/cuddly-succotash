@@ -35,6 +35,7 @@ local function update (pulseaudio)
         pulseaudio.widget_text:set_markup (
           markup.markup {
             fg = pulseaudio.color_mute,
+            font = pulseaudio.theme.font,
             string.format ("%d%%", math.ceil(pulseaudio.volume))
           }
         )
@@ -42,6 +43,8 @@ local function update (pulseaudio)
       else
         pulseaudio.widget_text:set_markup (
           markup.markup {
+            fg = pulseaudio.theme.fg_normal,
+            font = pulseaudio.theme.font,
             string.format ("%d%%", math.ceil(pulseaudio.volume))
           }
         )
@@ -62,6 +65,7 @@ local function update_widget (pulseaudio)
     pulseaudio.widget_text:set_markup (
       markup.markup {
         fg = pulseaudio.color_mute,
+        font = pulseaudio.theme.font,
         string.format ("%d%%", math.ceil(pulseaudio.volume))
       }
     )
@@ -69,6 +73,8 @@ local function update_widget (pulseaudio)
   else
     pulseaudio.widget_text:set_markup (
       markup.markup {
+        font = pulseaudio.theme.font,
+        fg = pulseaudio.theme.fg_normal,
         string.format ("%d%%", math.ceil(pulseaudio.volume))
       }
     )
