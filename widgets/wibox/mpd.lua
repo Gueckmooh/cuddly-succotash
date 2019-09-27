@@ -104,7 +104,6 @@ local function update (mpd)
   awful.spawn.easy_async_with_shell (
     mpd.cmd,
     function (stdout, stderr, reason, exit_code)
-      print (stdout)
 
       mpd.infos   = get_status (stdout, stderr, reason, exit_code)
 
