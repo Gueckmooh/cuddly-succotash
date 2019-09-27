@@ -101,9 +101,10 @@ local function update (mpd)
   local icon  = mpd.widget_icon
   local text  = mpd.widget_text
 
-  awful.spawn.easy_async (
+  awful.spawn.easy_async_with_shell (
     mpd.cmd,
     function (stdout, stderr, reason, exit_code)
+      print (stdout)
 
       mpd.infos   = get_status (stdout, stderr, reason, exit_code)
 
