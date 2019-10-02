@@ -88,7 +88,7 @@ local function get_cover (mpd)
   local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
   local file = string.format ("%s/%s", music_dir, infos.file)
   local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
-                               path:gsub("'", "'\\''"), cover_pattern)
+                                      path:gsub("'", "'\\''"), cover_pattern)
   local icon = nil
   -- local f = io.popen (cover, "r")
   print (mpd.find_cover .. " " .. file)
@@ -101,6 +101,39 @@ local function get_cover (mpd)
   return icon
 end
 
+local function notify (mpd, change)
+  local infos = mpd.infos
+  local theme = mpd.theme
+  local message
+
+  if infos.title ~= "N/A" then
+    message = string.format (
+      "%s - %s (%s)\n"..
+        "%s",
+      infos.artist, infos.album, infos.date,
+      infos.title
+    )
+  else
+    message = string.format (
+      "%s",
+      infos.file
+    )
+  end
+  local timeout = 0
+  if change then timeout = 5 end
+  mpd.notification = naughty.notify{
+    icon      = mpd.cover,
+    icon_size = 100,
+    title     = "Now playing",
+    text      = message,
+    timeout   = 5, hover_timeout = 0.5,
+    position  = "top_right",
+    bg        = theme.bg_normal,
+    fg        = theme.fg_normal,
+    width     = 300,
+  }
+end
+
 local function update (mpd)
   local icon  = mpd.widget_icon
   local text  = mpd.widget_text
@@ -111,31 +144,39 @@ local function update (mpd)
 
       mpd.infos   = get_status (stdout, stderr, reason, exit_code)
 
+      local changed = mpd.old_infos ~= false and (
+        mpd.old_infos.state ~= mpd.infos.state or
+          mpd.old_infos.file ~= mpd.infos.file)
       ------------------------------ COVER ------------------------------
+      if changed or mpd.old_infos == false then
+        mpd.cover = mpd.default_art
 
-      local music_dir     = mpd.music_dir
-      local infos         = mpd.infos
-      local cover_pattern = mpd.cover_pattern
-      -- local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
-      -- local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
-      --                                     path:gsub("'", "'\\''"), cover_pattern)
-      local file = string.format ("%s/%s", music_dir, infos.file)
-      local cover = string.format ("%s '%s'", mpd.find_cover, file)
+        local music_dir     = mpd.music_dir
+        local infos         = mpd.infos
+        local cover_pattern = mpd.cover_pattern
+        -- local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
+        -- local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
+        --                                     path:gsub("'", "'\\''"), cover_pattern)
+        local file = string.format ("%s/%s", music_dir, infos.file)
+        local cover = string.format ("%s '%s'", mpd.find_cover, file)
 
-      awful.spawn.easy_async_with_shell (
-        cover,
-        function (stdout, stderr, reason, exit_code)
-          if exit_code ~= 0 then
-            mpd.cover   = mpd.default_art
-          else
-            local icon = nil
-            local l = stdout
-            icon = l:gsub ("\n", "")
-            if #icon == 0 then icon = nil end
-            mpd.cover   = icon or mpd.default_art
-          end
-      end)
-
+        awful.spawn.easy_async_with_shell (
+          cover,
+          function (stdout, stderr, reason, exit_code)
+            if exit_code ~= 0 then
+              mpd.cover   = mpd.default_art
+            else
+              local icon = nil
+              local l = stdout
+              icon = l:gsub ("\n", "")
+              if #icon == 0 then icon = nil end
+              mpd.cover   = icon or mpd.default_art
+            end
+            if mpd.infos.state == "play" then
+              notify (mpd)
+            end
+        end)
+      end
       -------------------------------------------------------------------
       local infos = mpd.infos
       local theme = mpd.theme
@@ -193,38 +234,13 @@ local function update (mpd)
         text:set_text ("")
         icon:set_image (mpd.icon)
       end
+      -- if mpd.old_infos ~= false and (
+      --   mpd.old_infos.state ~= mpd.infos.state or
+      --   mpd.old_infos.file ~= mpd.infos.file) and mpd.infos.state == "play" then
+      --   notify (mpd, true)
+      -- end
+      mpd.old_infos = mpd.infos
   end)
-end
-
-local function notify (mpd)
-  local infos = mpd.infos
-  local theme = mpd.theme
-  local message
-
-  if infos.title ~= "N/A" then
-    message = string.format (
-      "%s - %s (%s)\n"..
-        "%s",
-      infos.artist, infos.album, infos.date,
-      infos.title
-    )
-  else
-    message = string.format (
-      "%s",
-      infos.file
-    )
-  end
-  mpd.notification = naughty.notify{
-    icon      = mpd.cover,
-    icon_size = 100,
-    title     = "Now playing",
-    text      = message,
-    timeout   = 5, hover_timeout = 0.5,
-    position  = "top_right",
-    bg        = theme.bg_normal,
-    fg        = theme.fg_normal,
-    width     = 300,
-  }
 end
 
 local function factory (args, theme)
@@ -254,6 +270,7 @@ local function factory (args, theme)
   mpd.find_cover    = helpers.scripts_dir .. "mpd-get-cover.sh"
 
   mpd.theme         = theme
+  mpd.old_infos     = false
 
   local mpdh = string.format("telnet://%s:%s", mpd.host, mpd.port)
   local echo = string.format("printf \"%sstatus\\ncurrentsong\\nclose\\n\"", mpd.password)
@@ -314,8 +331,8 @@ local function get_instance ()
 end
 
 local widget = {
-    factory = factory,
-    get_instance = get_instance
-  }
+  factory = factory,
+  get_instance = get_instance
+}
 
 return widget

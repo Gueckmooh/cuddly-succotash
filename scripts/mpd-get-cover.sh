@@ -18,6 +18,7 @@ fi
 
 TMP=${MP3FILE//\//.}
 TMP=${TMP/.mp3/.png}
+TMP=${TMP:1}
 ICONFILE="$ICONDIR/$TMP"
 
 if test -f "$ICONFILE"
@@ -28,6 +29,14 @@ fi
 
 if ffmpeg -i "$MP3FILE" "$ICONFILE" 2> /dev/null > /dev/null
 then
+    EXIF=$(exiftool "$ICONFILE")
+    WIDTH=$(echo "$EXIF" | awk '/Image Width/ {print $4}')
+    HEIGHT=$(echo "$EXIF" | awk '/Image Height/ {print $4}')
+    if test "$WIDTH" -gt "$HEIGHT"
+    then
+        ADJUST=$((($WIDTH/2) - ($HEIGHT/2)))
+        convert "$ICONFILE" -crop "${HEIGHT}x${HEIGHT}+${ADJUST}+0" "$ICONFILE"
+    fi
     echo $ICONFILE
     exit 0
 fi

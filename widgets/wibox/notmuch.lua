@@ -33,17 +33,18 @@ local function get_message (notmuch, mails)
   local fold_left = functional.fold_left
   local truncate = markup.truncate
   local ldate = fold_left (function (a, b) return math.max (a, string.len (b.date)) end, 0, mails)
-  local ldate = math.min (ldate, 30)
+  local ldate = math.min (ldate, notmuch.lmax - 10)
   local lfrom = fold_left (function (a, b) return math.max (a, string.len (b.from)) end, 0, mails)
   local lsubject = fold_left (function (a, b) return math.max (a, string.len (b.subject)) end, 0, mails)
-  local lsubject = math.min (lsubject, 40)
+  local lsubject = math.min (lsubject, notmuch.lmax)
 
 
   local l1 = 6 + lfrom + 3 + ldate
   local l2 = 9 + lsubject
+  local l3 = l1 > l2 and lfrom or (l2 -ldate -9)
   local tab = {string.rep ("-", math.max (l1, l2)).."\n"}
   for k, mail in ipairs (mails) do
-    tab[#tab+1] = string.format (markup.bold ("From:").." %-"..lfrom.."s   %"..ldate.."s\n", mail.from, mail.date)
+    tab[#tab+1] = string.format (markup.bold ("From:").." %-"..(l3).."s   %"..ldate.."s\n", mail.from, mail.date)
     tab[#tab+1] = string.format (markup.bold ("Subject:").." %-"..lsubject.."s\n", truncate (mail.subject, math.max(l1, l2) - 9))
     tab[#tab+1] = string.format ("%s", string.rep ("-", math.max (l1, l2)))
     if k ~= #mails and k ~= notmuch.max_notif then
@@ -132,13 +133,14 @@ local function factory (args, theme)
 
   notmuch.mails = nil
 
-  notmuch.timeout = args.timeout or 1
+  notmuch.timeout = args.timeout or 15
   notmuch.theme = theme
   notmuch.notification = nil
   notmuch.icon = theme.widget_mail or helpers.icons_dir .. "mail.png"
   notmuch.icon_new = theme.widget_mail_on or helpers.icons_dir .. "mail_on.png"
 
   notmuch.max_notif = args.max_notif or 5
+  notmuch.lmax = args.lmax or 40
 
   -- notmuch.color1 = "#37364c"
   notmuch.color1 = "#99a6c4"

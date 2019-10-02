@@ -60,6 +60,33 @@ local function update (battery)
 
       text:set_markup (message)
       wicon:set_image (icon)
+
+      if plugged then
+        if charge == 100 then
+          if battery.warning_type ~= "full" then
+            naughty.notify { preset = battery.charged_preset }
+            battery.warning_type = "full"
+          end
+        else
+          battery.warning_type = "charging"
+        end
+      else -- unplugged
+        if charge > 30 then
+          battery.warning_type = "discharging"
+        elseif charge > 15 then
+          if battery.warning_type ~= "low" or os.difftime (os.time (), battery.last_warning) > 300 then
+            naughty.notify { preset = battery.low_preset }
+            battery.warning_type = "low"
+            battery.last_warning = os.time ()
+          end
+        else -- < 15
+          if battery.warning_type ~= "critical" or os.difftime (os.time (), battery.last_warning) > 300 then
+            naughty.notify { preset = battery.critical_preset }
+            battery.warning_type = "critical"
+            battery.last_warning = os.time ()
+          end
+        end
+      end
   end)
 end
 
@@ -99,13 +126,48 @@ local function factory (args, theme)
   battery.icon_empty    = theme.widget_battery_empty
   battery.fg_urgent     = theme.fg_urgent
 
+  battery.popup_icon    = theme.widget_battery_popup_icon or helpers.icons_dir .. "spaceman.jpg"
+
   battery.timeout = args.timeout or 2
   battery.theme = theme
   battery.notification = nil
 
+  battery.last_warning = 0
+  battery.warning_type = nil
+
+  battery.critical_preset = {
+    title   = "PAAAAAANIC",
+    text    = "Battery exhausted",
+    timeout = 15,
+    fg      = theme.fg_urgent,
+    bg      = theme.bg_urgent,
+    icon    = battery.popup_icon,
+    icon_size = 100,
+  }
+
+  battery.low_preset = {
+    title   = "Huston, we have a pronlem",
+    text    = "Battery is dying",
+    timeout = 15,
+    fg      = "#202020",
+    bg      = "#CDCDCD",
+    icon    = battery.popup_icon,
+    icon_size = 100,
+  }
+
+
+  battery.charged_preset = {
+    title   = "Fiou",
+    text    = "Battery Full",
+    timeout = 15,
+    fg      = "#202020",
+    bg      = "#CDCDCD"
+  }
+
+
   -- {{{ SETUP OF THE WIDGET
   battery.widget_text = wibox.widget {
-    text = "Hey",
+    text = "",
     widget = wibox.widget.textbox
   }
 
@@ -114,6 +176,17 @@ local function factory (args, theme)
     resize = true,
     widget = wibox.widget.imagebox
   }
+
+  -- battery.widget_arc = wibox.widget {
+  --     max_value = 100,
+  --     min_value = 0,
+  --     thickness = 2,
+  --     start_angle = 4.71238898, -- 2pi*3/4
+  --     fg = theme.fg_normal,
+  --     paddings = 2,
+  --     widget = wibox.container.arcchart,
+  --     value = 76
+  -- }
 
   battery.widget = wibox.widget {
     battery.widget_icon,
