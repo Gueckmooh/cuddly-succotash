@@ -31,6 +31,15 @@ function markup.markup (args)
 
 end
 
+function markup.truncate (str, len)
+  if string.len (str) > len - 3 then
+    return string.format ("%s...", string.sub (str, 0, len-3))
+  else
+    return str
+  end
+end
+
+
 setmetatable(markup, { __call = markup.markup })
 
 return markup
