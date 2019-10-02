@@ -120,16 +120,20 @@ local function update (mpd)
       -- local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
       --                                     path:gsub("'", "'\\''"), cover_pattern)
       local file = string.format ("%s/%s", music_dir, infos.file)
-      local cover = string.format ("%s %s", mpd.find_cover, file)
+      local cover = string.format ("%s '%s'", mpd.find_cover, file)
 
       awful.spawn.easy_async_with_shell (
         cover,
         function (stdout, stderr, reason, exit_code)
-          local icon = nil
-          local l = stdout
-          icon = l:gsub ("\n", "")
-          if #icon == 0 then icon = nil end
-          mpd.cover   = icon or mpd.default_art
+          if exit_code ~= 0 then
+            mpd.cover   = mpd.default_art
+          else
+            local icon = nil
+            local l = stdout
+            icon = l:gsub ("\n", "")
+            if #icon == 0 then icon = nil end
+            mpd.cover   = icon or mpd.default_art
+          end
       end)
 
       -------------------------------------------------------------------
