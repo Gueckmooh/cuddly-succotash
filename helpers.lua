@@ -18,6 +18,7 @@ local helpers = {}
 
 helpers.cuddly_dir    = debug.getinfo(1, 'S').source:match[[^@(.*/).*$]]
 helpers.icons_dir     = helpers.cuddly_dir .. 'icons/'
+helpers.scripts_dir     = helpers.cuddly_dir .. 'scripts/'
 
 function helpers.which (str)
   local cmd = string.format ("which %s > /dev/null 2>&1", str)

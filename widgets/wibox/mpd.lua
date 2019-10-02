@@ -20,6 +20,7 @@ local dpi        = xresources.apply_dpi
 local timer      = require "gears.timer"
 local markup     = require "cuddly-succotash.util.markup"
 local curry      = require ("cuddly-succotash.util.functional").curry
+local helpers    = require "cuddly-succotash.helpers"
 
 local mpd = nil
 
@@ -85,10 +86,13 @@ local function get_cover (mpd)
   local infos         = mpd.infos
   local cover_pattern = mpd.cover_pattern
   local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
+  local file = string.format ("%s/%s", music_dir, infos.file)
   local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
                                path:gsub("'", "'\\''"), cover_pattern)
   local icon = nil
-  local f = io.popen (cover, "r")
+  -- local f = io.popen (cover, "r")
+  print (mpd.find_cover .. " " .. file)
+  local f = io.popen (mpd.find_cover .. " " .. file, "r")
   local l = f:read "*a"
   f:close ()
   icon = l:gsub ("\n", "")
@@ -112,9 +116,11 @@ local function update (mpd)
       local music_dir     = mpd.music_dir
       local infos         = mpd.infos
       local cover_pattern = mpd.cover_pattern
-      local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
-      local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
-                                          path:gsub("'", "'\\''"), cover_pattern)
+      -- local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
+      -- local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
+      --                                     path:gsub("'", "'\\''"), cover_pattern)
+      local file = string.format ("%s/%s", music_dir, infos.file)
+      local cover = string.format ("%s %s", mpd.find_cover, file)
 
       awful.spawn.easy_async_with_shell (
         cover,
@@ -241,6 +247,7 @@ local function factory (args, theme)
   mpd.notify        = args.notify or "on"
   mpd.followtag     = args.followtag or false
   mpd.settings      = args.settings or function() end
+  mpd.find_cover    = helpers.scripts_dir .. "mpd-get-cover.sh"
 
   mpd.theme         = theme
 
