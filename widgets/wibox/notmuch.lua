@@ -11,8 +11,6 @@ local timer           = require "gears.timer"
 
 local notmuch = nil
 
--- TODO: Print real unread mail number [29/34(96)]
-
 local function get_mails (stdout, stderr, reason, exit_code)
   local mails = {}
   for line in stdout:gmatch ("[^\n]*") do
@@ -62,6 +60,7 @@ local function get_message (notmuch, mails)
   return message
 end
 
+-- TODO: Change new mail determination
 local function get_new_mails (old_list, new_list)
   local get_ids = function (v) return v.id end
   local set = function (l)
@@ -138,7 +137,7 @@ local function notify (notmuch)
   notmuch.notification = naughty.notify {
     preset = notmuch.notification_preset,
     text = message,
-    title = string.format ("%d unread mail(s)", #notmuch.mails)
+    title = string.format ("%d unread threads(s)", #notmuch.mails)
   }
 end
 
