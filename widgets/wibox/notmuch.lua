@@ -11,16 +11,19 @@ local timer           = require "gears.timer"
 
 local notmuch = nil
 
+-- TODO: Print real unread mail number [29/34(96)]
+
 local function get_mails (stdout, stderr, reason, exit_code)
   local mails = {}
   for line in stdout:gmatch ("[^\n]*") do
     if line ~= "" then
-      local id, date, from, subject = line:match ("^thread:([^ ]*)[ ]*(.*) %[.*%] (.*); (.*) %(.*%)$")
+      local id, date, nb, _, _, from, subject = line:match ("^thread:([^ ]*)[ ]*(.*) %[(%d*)/(%d*)%((%d*)%)%] (.*); (.*) %(.*%)$")
       mails[#mails+1] = {
         id = id,
         date = date,
         from = from,
-        subject = subject
+        subject = subject,
+        nb = nb
       }
     end
   end
@@ -81,6 +84,7 @@ end
 
 local function update (notmuch)
   local cmd = "notmuch search tag:unread"
+  local theme = notmuch.theme
   notmuch.old_mails = notmuch.mails
   awful.spawn.easy_async (
     cmd,
@@ -95,7 +99,18 @@ local function update (notmuch)
         text:set_text ("")
         wicon:set_image (notmuch.icon)
       else
-        text:set_text (tostring (#notmuch.mails))
+        local nb = functional.fold_left (
+          function (a, b) return a + b.nb end
+          , 0, notmuch.mails
+                                  )
+        nb = math.floor (nb)
+        text:set_markup (
+          markup.markup {
+            fg = theme.fg_normal,
+            font = theme.font,
+            tostring (nb)
+          }
+        )
         wicon:set_image (notmuch.icon_new)
       end
       if notmuch.old_mails then
