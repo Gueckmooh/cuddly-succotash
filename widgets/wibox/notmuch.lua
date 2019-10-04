@@ -3,10 +3,10 @@ local awful           = require ("awful")
 local naughty         = require ("naughty")
 local xresources      = require("beautiful.xresources")
 local dpi             = xresources.apply_dpi
-local markup          = require "cuddly-succotash.util.markup"
-local functional      = require "cuddly-succotash.util.functional"
+local markup          = require "cuddly.util.markup"
+local functional      = require "cuddly.util.functional"
 local curry           = functional.curry
-local helpers         = require "cuddly-succotash.helpers"
+local helpers         = require "cuddly.helpers"
 local timer           = require "gears.timer"
 
 local notmuch = nil

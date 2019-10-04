@@ -3,11 +3,11 @@ local awful           = require ("awful")
 local naughty         = require ("naughty")
 local xresources      = require("beautiful.xresources")
 local dpi             = xresources.apply_dpi
-local markup          = require "cuddly-succotash.util.markup"
-local curry           = require "cuddly-succotash.util.functional".curry
-local helpers         = require "cuddly-succotash.helpers"
+local markup          = require "cuddly.util.markup"
+local curry           = require "cuddly.util.functional".curry
+local helpers         = require "cuddly.helpers"
 local timer           = require "gears.timer"
-local path            = require "cuddly-succotash.util.path"
+local path            = require "cuddly.util.path"
 
 local screenshot = nil
 
