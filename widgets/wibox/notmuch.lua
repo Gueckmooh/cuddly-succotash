@@ -49,7 +49,7 @@ local function get_message (notmuch, mails)
     tab[#tab+1] = string.format ("%s", string.rep ("-", math.max (l1, l2)))
     if k ~= #mails and k ~= notmuch.max_notif then
       tab[#tab] = tab[#tab] .. "\n"
-    elseif k == notmuch.max_notif then
+    elseif k == notmuch.max_notif and k ~= #mails then
       tab[#tab+1] = string.format ("\nAnd %d more...", #mails - k)
       break
     end

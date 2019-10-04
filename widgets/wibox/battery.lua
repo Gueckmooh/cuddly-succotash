@@ -133,7 +133,7 @@ local function factory (args, theme)
   battery.notification = nil
 
   battery.last_warning = 0
-  battery.warning_type = nil
+  battery.warning_type = "full"
 
   battery.critical_preset = {
     title   = "PAAAAAANIC",
