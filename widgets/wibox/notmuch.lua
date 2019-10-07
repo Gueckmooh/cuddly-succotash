@@ -38,6 +38,7 @@ local function get_message (notmuch, mails)
   local lfrom = fold_left (function (a, b) return math.max (a, string.len (b.from)) end, 0, mails)
   local lsubject = fold_left (function (a, b) return math.max (a, string.len (b.subject)) end, 0, mails)
   local lsubject = math.min (lsubject, notmuch.lmax)
+  local lfrom = math.min (lfrom, lsubject - ldate - 3)
 
 
   local l1 = 6 + lfrom + 3 + ldate
@@ -45,7 +46,7 @@ local function get_message (notmuch, mails)
   local l3 = l1 > l2 and lfrom or (l2 -ldate -9)
   local tab = {string.rep ("-", math.max (l1, l2)).."\n"}
   for k, mail in ipairs (mails) do
-    tab[#tab+1] = string.format (markup.bold ("From:").." %-"..(l3).."s   %"..ldate.."s\n", mail.from, mail.date)
+    tab[#tab+1] = string.format (markup.bold ("From:").." %-"..(l3).."s   %"..ldate.."s\n", truncate (mail.from, l3-10), mail.date)
     tab[#tab+1] = string.format (markup.bold ("Subject:").." %-"..lsubject.."s\n", truncate (mail.subject, math.max(l1, l2) - 9))
     tab[#tab+1] = string.format ("%s", string.rep ("-", math.max (l1, l2)))
     if k ~= #mails and k ~= notmuch.max_notif then
