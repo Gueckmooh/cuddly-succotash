@@ -48,7 +48,13 @@ local function update (pacman)
         text:set_text ("")
         wicon:set_image (pacman.icon)
       else
-        text:set_text (tostring (#pacman.packages))
+        text:set_markup (
+          markup.markup {
+              fg = pacman.theme.fg_normal,
+              font = pacman.theme.font,
+              tostring (#pacman.packages)
+            }
+          )
         wicon:set_image (pacman.icon_avail)
       end
   end)
