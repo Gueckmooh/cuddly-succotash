@@ -37,13 +37,13 @@ function quake:new(config)
 
   local dropdown = setmetatable(conf, { __index = quake })
 
-  client.connect_signal("manage", function(c)
+  _G.client.connect_signal("manage", function(c)
                           if (c.instance == dropdown.name) or (c.name == dropdown.name)
                           and c.screen == dropdown.screen then
                             dropdown:display()
                           end
   end)
-  client.connect_signal("unmanage", function(c)
+  _G.client.connect_signal("unmanage", function(c)
                           if (c.instance == dropdown.name) or (c.name == dropdown.name)
                           and c.screen == dropdown.screen then
                             dropdown.visible = false
@@ -117,7 +117,7 @@ function quake:display()
     client:raise()
     self.last_tag = self.screen.selected_tag
     client:tags({self.screen.selected_tag})
-    client.focus = client
+    _G.client.focus = client
   else
     client.hidden = true
     local ctags = client:tags()
