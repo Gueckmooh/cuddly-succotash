@@ -16,6 +16,9 @@ local function get_mails (stdout, stderr, reason, exit_code)
   for line in stdout:gmatch ("[^\n]*") do
     if line ~= "" then
       local id, date, nb, _, _, from, subject = line:match ("^thread:([^ ]*)[ ]*(.*) %[(%d*)/(%d*)%((%d*)%)%] (.*); (.*) %(.*%)$")
+      if not id then
+        id, date, nb, _, from, subject = line:match ("^thread:([^ ]*)[ ]*(.*) %[(%d*)/(%d*)%] (.*); (.*) %(.*%)$")
+      end
       mails[#mails+1] = {
         id = id,
         date = date,
