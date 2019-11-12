@@ -76,7 +76,11 @@ local function notify (pacman)
 
     local from_str = markup.markup {
       fg = pacman.color1,
-      markup.bold (string.format ("%-" .. l2 .. "s", l.from))
+      -- markup.bold (string.format ("%-" .. l2 .. "s", l.from))
+      markup.bold (string.format ("%-" .. l2 + 36 .. "s", l.from:sub (0, i-1) ..
+                                    markup.markup {fg = pacman.color3, l.from:sub (i)}
+
+      ))
     }
 
     local to_str = markup.markup {
@@ -110,6 +114,7 @@ local function factory (args, theme)
   -- pacman.color1 = "#37364c"
   pacman.color1 = "#99a6c4"
   pacman.color2 = "#93014a"
+  pacman.color3 = "#fcd00f"
 
   pacman.notification_preset = args.notification_preset or {
     title = "Packages to upgrade",
