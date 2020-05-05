@@ -16,7 +16,7 @@ local battery = nil
 -- unknown: Battery 0: Unknown, 89% Adapter 0: on-line
 local function update (battery)
   local text         = battery.widget_text
-  local wicon         = battery.widget_icon
+  local wicon        = battery.widget_icon
   local cmd          = "echo $(acpi -b) // $(acpi -a)"
   local matching_str = [[([^:]*): (%a*), (%d?%d?%d?)%%(.*)// ([^:]*): ([a-z-]*)]]
   local theme        = battery.theme
@@ -74,13 +74,13 @@ local function update (battery)
         if charge > 30 then
           battery.warning_type = "discharging"
         elseif charge > 15 then
-          if battery.warning_type ~= "low" or os.difftime (os.time (), battery.last_warning) > 300 then
+          if battery.warning_type ~= "low" or os.difftime (os.time (), battery.last_warning) > battery.notify_interval then
             naughty.notify { preset = battery.low_preset }
             battery.warning_type = "low"
             battery.last_warning = os.time ()
           end
         else -- < 15
-          if battery.warning_type ~= "critical" or os.difftime (os.time (), battery.last_warning) > 300 then
+          if battery.warning_type ~= "critical" or os.difftime (os.time (), battery.last_warning) > battery.notify_interval then
             naughty.notify { preset = battery.critical_preset }
             battery.warning_type = "critical"
             battery.last_warning = os.time ()
@@ -129,6 +129,7 @@ local function factory (args, theme)
   battery.popup_icon    = theme.widget_battery_popup_icon or helpers.icons_dir .. "spaceman.jpg"
 
   battery.timeout = args.timeout or 2
+  battery.notify_interval = args.notify_interval or 300
   battery.theme = theme
   battery.notification = nil
 
