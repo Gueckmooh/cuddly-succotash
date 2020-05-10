@@ -117,13 +117,16 @@ local function connect (c)
   )
 end
 
-local function power_on (c)
+local function power_on (c, devices)
   awful.spawn.easy_async_with_shell (
     [[bluetoothctl power on]],
     function (stdout, stderr, reason, exit_code)
       for line in string.gmatch (stdout, "[^\n]*") do
         if string.match (line, "Changing power on succeeded") then
           c:set_icon (bluetooth.icon_checked)
+          for _, v in pairs(devices) do
+            v:set_bg (bluetooth.bg_normal)
+          end
           bluetooth:update()
         end
       end
@@ -131,13 +134,16 @@ local function power_on (c)
   )
 end
 
-local function power_off (c)
+local function power_off (c, devices)
   awful.spawn.easy_async_with_shell (
     [[bluetoothctl power off]],
     function (stdout, stderr, reason, exit_code)
       for line in string.gmatch (stdout, "[^\n]*") do
         if string.match (line, "Changing power off succeeded") then
           c:set_icon (bluetooth.icon_checked)
+          for _, v in pairs(devices) do
+            v:set_bg ("#666666")
+          end
           bluetooth:update()
         end
       end
@@ -151,13 +157,17 @@ local function create_rows (bluetooth)
     layout = wibox.layout.fixed.vertical,
   }
 
+  local devices = {}
+
   for k, v in pairs (bluetooth.infos.devices_infos) do
     local icon = v.connected and bluetooth.icon_checked
       or bluetooth.icon_unchecked
 
+    local bg = bluetooth.infos.powered and bluetooth.bg_normal or "#666666"
+
     local tmp = wibox.widget {
       widget = wibox.container.background,
-      bg = bluetooth.bg_normal,
+      bg = bg,
       id = "background",
       {
         layout = wibox.layout.fixed.horizontal,
@@ -196,22 +206,41 @@ local function create_rows (bluetooth)
       mac = v.mac
     }
 
-    tmp:connect_signal ("mouse::enter", function (c) c:set_bg(bluetooth.bg_focus) end)
-    tmp:connect_signal ("mouse::leave", function (c) c:set_bg(bluetooth.bg_normal) end)
+    tmp:connect_signal ("mouse::enter",
+                        function (c)
+                          if bluetooth.infos.powered then
+                            c:set_bg(bluetooth.bg_focus)
+                          else
+                            c:set_bg("#666666")
+                          end
+                        end
+    )
+    tmp:connect_signal ("mouse::leave",
+                        function (c)
+                          if bluetooth.infos.powered then
+                            c:set_bg(bluetooth.bg_normal)
+                          else
+                            c:set_bg("#666666")
+                          end
+                        end
+    )
 
     tmp:buttons (
       gears.table.join (
         awful.button({}, 1, function()
-            if bluetooth.infos.devices_infos[tmp.name].connected then
-              disconnect (tmp)
-            else
-              connect (tmp)
+            if bluetooth.infos.powered then
+              if bluetooth.infos.devices_infos[tmp.name].connected then
+                disconnect (tmp)
+              else
+                connect (tmp)
+              end
             end
         end)
       )
     )
 
-    table.insert (rows, tmp)
+      table.insert (devices, tmp)
+      table.insert (rows, tmp)
 
   end
 
@@ -267,10 +296,10 @@ local function create_rows (bluetooth)
       awful.button({}, 1, function()
           if bluetooth.infos.powered then
             print "power_off"
-            power_off (tmp)
+            power_off (tmp, devices)
           else
             print "power_on"
-            power_on (tmp)
+            power_on (tmp, devices)
           end
       end)
     )
@@ -297,7 +326,6 @@ local function update (bluetooth)
       for k, v in pairs (infos) do
         connected = connected or v.connected end
       bluetooth.infos.connected = connected
-      require ("pl.pretty").dump (infos)
     end
   )
 
@@ -308,7 +336,6 @@ local function update (bluetooth)
       local infos = get_host_infos (lines)
       bluetooth.infos.host_infos = infos
       bluetooth.infos.powered = infos.powered
-      require ("pl.pretty").dump (infos)
     end
   )
 
@@ -344,7 +371,6 @@ end
 
 local function factory (args, theme)
   local theme = theme or beautiful
-  require ("pl.pretty").dump (theme)
   local args = args or {}
 
   bluetooth = {}
