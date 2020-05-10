@@ -97,6 +97,7 @@ local function disconnect (c)
         if string.match (line, "Successful disconnected") then
           c:set_icon (bluetooth.icon_unchecked)
           bluetooth:update()
+          return
         end
       end
     end
@@ -111,6 +112,7 @@ local function connect (c)
         if string.match (line, "Connection successful") then
           c:set_icon (bluetooth.icon_checked)
           bluetooth:update()
+          return
         end
       end
     end
@@ -129,6 +131,7 @@ local function power_on (c, devices)
             v:set_icon (bluetooth.icon_unchecked)
           end
           bluetooth:update()
+          return
         end
       end
     end
@@ -147,6 +150,7 @@ local function power_off (c, devices)
             v:set_icon (bluetooth.icon_unchecked)
           end
           bluetooth:update()
+          return
         end
       end
     end
