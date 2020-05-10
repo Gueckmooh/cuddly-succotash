@@ -126,6 +126,7 @@ local function power_on (c, devices)
           c:set_icon (bluetooth.icon_checked)
           for _, v in pairs(devices) do
             v:set_bg (bluetooth.bg_normal)
+            v:set_icon (bluetooth.icon_unchecked)
           end
           bluetooth:update()
         end
@@ -140,9 +141,10 @@ local function power_off (c, devices)
     function (stdout, stderr, reason, exit_code)
       for line in string.gmatch (stdout, "[^\n]*") do
         if string.match (line, "Changing power off succeeded") then
-          c:set_icon (bluetooth.icon_checked)
+          c:set_icon (bluetooth.icon_unchecked)
           for _, v in pairs(devices) do
             v:set_bg ("#666666")
+            v:set_icon (bluetooth.icon_unchecked)
           end
           bluetooth:update()
         end
