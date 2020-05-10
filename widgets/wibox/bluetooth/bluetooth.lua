@@ -8,6 +8,9 @@ local curry           = require "cuddly.util.functional".curry
 local helpers         = require "cuddly.helpers"
 local timer           = require "gears.timer"
 local beautiful       = require "beautiful"
+local gears           = require "gears"
+
+
 
 local icons_dir = debug.getinfo(1, 'S').source:match[[^@(.*/).*$]] .. "icons/"
 
@@ -49,21 +52,26 @@ local function get_host_infos (lines)
   return host_infos
 end
 
--- for i in $(bluetoothctl devices | awk '{print $2}'); do bluetoothctl info "$i"; done
 
 local function get_devices_infos (lines)
   local devices_infos = {}
+  if lines:match("No default controller available") ~= nil then
+    return devices_infos end
 
   local devices = {}
+  local last_mac = ""
   for line in string.gmatch (lines, "[^\n]*") do
-    if string.match (line, "Device .*") then devices[#devices+1] = line
-    else devices[#devices] = devices[#devices] .. "\n" .. line end
+    local mac = string.match (line, "Device ([^%s]*) .*")
+    if mac then devices[mac] = line
+      last_mac = mac
+    else devices[last_mac] = devices[last_mac] .. "\n" .. line end
   end
 
   local infos = {}
-  for _, d in pairs (devices) do
+  for k, d in pairs (devices) do
     infos[#infos+1] = {}
     local t = infos[#infos]
+    t.mac = k
     for line in string.gmatch (d, "[^\n]*") do
       local k, v = string.match (line, "%s*([^:]*): (.*)")
       if     k == "Name"            then t.name = v
@@ -80,6 +88,200 @@ local function get_devices_infos (lines)
 
   return devices_infos
 end
+
+local function disconnect (c)
+  awful.spawn.easy_async_with_shell (
+    string.format([[bluetoothctl disconnect %s]], c.mac),
+    function (stdout, stderr, reason, exit_code)
+      for line in string.gmatch (stdout, "[^\n]*") do
+        if string.match (line, "Successful disconnected") then
+          c:set_icon (bluetooth.icon_unchecked)
+          bluetooth:update()
+        end
+      end
+    end
+  )
+end
+
+local function connect (c)
+  awful.spawn.easy_async_with_shell (
+    string.format([[bluetoothctl connect %s]], c.mac),
+    function (stdout, stderr, reason, exit_code)
+      for line in string.gmatch (stdout, "[^\n]*") do
+        if string.match (line, "Connection successful") then
+          c:set_icon (bluetooth.icon_checked)
+          bluetooth:update()
+        end
+      end
+    end
+  )
+end
+
+local function power_on (c)
+  awful.spawn.easy_async_with_shell (
+    [[bluetoothctl power on]],
+    function (stdout, stderr, reason, exit_code)
+      for line in string.gmatch (stdout, "[^\n]*") do
+        if string.match (line, "Changing power on succeeded") then
+          c:set_icon (bluetooth.icon_checked)
+          bluetooth:update()
+        end
+      end
+    end
+  )
+end
+
+local function power_off (c)
+  awful.spawn.easy_async_with_shell (
+    [[bluetoothctl power off]],
+    function (stdout, stderr, reason, exit_code)
+      for line in string.gmatch (stdout, "[^\n]*") do
+        if string.match (line, "Changing power off succeeded") then
+          c:set_icon (bluetooth.icon_checked)
+          bluetooth:update()
+        end
+      end
+    end
+  )
+end
+
+local function create_rows (bluetooth)
+
+  local rows = {
+    layout = wibox.layout.fixed.vertical,
+  }
+
+  for k, v in pairs (bluetooth.infos.devices_infos) do
+    local icon = v.connected and bluetooth.icon_checked
+      or bluetooth.icon_unchecked
+
+    local tmp = wibox.widget {
+      widget = wibox.container.background,
+      bg = bluetooth.bg_normal,
+      id = "background",
+      {
+        layout = wibox.layout.fixed.horizontal,
+        id = "lay",
+        {
+          id = "margin_icon",
+          layout = wibox.container.margin,
+          margins = 4,
+          {
+            id = "icon",
+            widget = wibox.widget.imagebox,
+            image = icon,
+            resize = true,
+            forced_height = 30,
+            forced_width = 30,
+          }
+        },
+        {
+          id = "margin_txt",
+          layout = wibox.container.margin,
+          margins = 8,
+          {
+            id = "txt",
+            widget = wibox.widget.textbox,
+            text = k
+          }
+        }
+      },
+      set_text = function (self, new_value)
+        self.lay.margin_txt.txt.text = new_value
+      end,
+      set_icon = function(self, new_value)
+        self.lay.margin_icon.icon.image = new_value
+      end,
+      name = k,
+      mac = v.mac
+    }
+
+    tmp:connect_signal ("mouse::enter", function (c) c:set_bg(bluetooth.bg_focus) end)
+    tmp:connect_signal ("mouse::leave", function (c) c:set_bg(bluetooth.bg_normal) end)
+
+    tmp:buttons (
+      gears.table.join (
+        awful.button({}, 1, function()
+            if bluetooth.infos.devices_infos[tmp.name].connected then
+              disconnect (tmp)
+            else
+              connect (tmp)
+            end
+        end)
+      )
+    )
+
+    table.insert (rows, tmp)
+
+  end
+
+  -- For power
+
+  local icon = bluetooth.infos.powered and bluetooth.icon_checked
+    or bluetooth.icon_unchecked
+
+  local tmp = wibox.widget {
+    widget = wibox.container.background,
+    bg = bluetooth.bg_normal,
+    id = "background",
+    {
+      layout = wibox.layout.fixed.horizontal,
+      id = "lay",
+      {
+        id = "margin_icon",
+        layout = wibox.container.margin,
+        margins = 4,
+        {
+          id = "icon",
+          widget = wibox.widget.imagebox,
+          image = icon,
+          resize = true,
+          forced_height = 30,
+          forced_width = 30,
+        }
+      },
+      {
+        id = "margin_txt",
+        layout = wibox.container.margin,
+        margins = 8,
+        {
+          id = "txt",
+          widget = wibox.widget.textbox,
+          text = "Powered"
+        }
+      }
+    },
+    set_text = function (self, new_value)
+      self.lay.margin_txt.txt.text = new_value
+    end,
+    set_icon = function(self, new_value)
+      self.lay.margin_icon.icon.image = new_value
+    end,
+  }
+
+  tmp:connect_signal ("mouse::enter", function (c) c:set_bg(bluetooth.bg_focus) end)
+  tmp:connect_signal ("mouse::leave", function (c) c:set_bg(bluetooth.bg_normal) end)
+
+  tmp:buttons (
+    gears.table.join (
+      awful.button({}, 1, function()
+          if bluetooth.infos.powered then
+            print "power_off"
+            power_off (tmp)
+          else
+            print "power_on"
+            power_on (tmp)
+          end
+      end)
+    )
+  )
+
+  table.insert (rows, tmp)
+
+  return rows
+
+end
+
 
 local function update (bluetooth)
   local wicon        = bluetooth.widget_icon
@@ -122,40 +324,64 @@ local function update (bluetooth)
 
   wicon:set_image (icon)
 
+  local devices_names = ""
+  for k, _ in pairs (bluetooth.infos.devices_infos) do
+    devices_names = devices_names .. k
+  end
+
+  if devices_names ~= bluetooth.devices_names then
+    bluetooth.devices_names = devices_names
+
+    local rows = create_rows (bluetooth)
+
+    bluetooth.popup:setup(rows)
+
+  end
+
+  -- bluetooth.items = devices_items
+
 end
 
 local function factory (args, theme)
   local theme = theme or beautiful
+  require ("pl.pretty").dump (theme)
   local args = args or {}
 
   bluetooth = {}
 
+  bluetooth.theme = theme
+
+  bluetooth.update = update
+
   bluetooth.icon_active = icons_dir .. "bluetooth-active.svg"
   bluetooth.icon_disabled = icons_dir .. "bluetooth-disabled.svg"
   bluetooth.icon_connected = icons_dir .. "bluetooth-connected.svg"
+  bluetooth.icon_checked = icons_dir .. "checkbox-checked-symbolic.svg"
+  bluetooth.icon_unchecked = icons_dir .. "checkbox-symbolic.svg"
 
   bluetooth.infos = {
     host_infos = {},
     devices_infos = {},
     connected = false,
+    items = {},
+    powered = {},
+    devices_names = ""
   }
-  bluetooth.icon_charging = theme.widget_ac or helpers.icons_dir .. "ac.png"
-  bluetooth.icon_full     = theme.widget_bluetooth
-  bluetooth.icon_low      = theme.widget_bluetooth_low
-  bluetooth.icon_empty    = theme.widget_bluetooth_empty
-  bluetooth.fg_urgent     = theme.fg_urgent
 
-  bluetooth.popup_icon    = theme.widget_bluetooth_popup_icon or helpers.icons_dir .. "spaceman.jpg"
+  bluetooth.rows = {layout = wibox.layout.align.vertical}
 
   bluetooth.timeout = args.timeout or 2
   bluetooth.notify_interval = args.notify_interval or 300
   bluetooth.theme = theme
   bluetooth.notification = nil
 
+  bluetooth.bg_normal = args.bg_normal or theme.bg_normal
+  bluetooth.bg_focus = args.bg_focus or theme.bg_focus
+
 
   -- {{{ SETUP OF THE WIDGET
   bluetooth.widget_icon = wibox.widget {
-    image = bluetooth.icon_active,
+    image = bluetooth.icon_disabled,
     resize = true,
     widget = wibox.widget.imagebox
   }
@@ -169,6 +395,39 @@ local function factory (args, theme)
     },
     layout = wibox.layout.align.horizontal,
   }
+
+
+  bluetooth.popup = awful.popup{
+    bg = theme.bg_normal,
+    ontop = true,
+    visible = false,
+    shape = gears.shape.rounded_rect,
+    border_width = 1,
+    border_color = theme.bg_focus,
+    maximum_width = 400,
+    offset = { y = 5 },
+    widget = {}
+  }
+
+
+  function bluetooth.popup:toggle()
+    if bluetooth.popup.visible then
+      bluetooth.popup.visible = not bluetooth.popup.visible
+    else
+      bluetooth.popup:move_next_to(mouse.current_widget_geometry)
+    end
+  end
+
+
+  bluetooth.widget:buttons (
+    gears.table.join (
+      awful.button({}, 1, function()
+          bluetooth.popup:toggle()
+      end)
+    )
+  )
+
+
   -- }}}
 
   -- Init
@@ -189,6 +448,7 @@ local function factory (args, theme)
   -- battery.widget:connect_signal("mouse::enter", notify)
   -- battery.widget:connect_signal("mouse::leave", function()
   --                                 naughty.destroy(battery.notification) end)
+
 
   return bluetooth
 end
