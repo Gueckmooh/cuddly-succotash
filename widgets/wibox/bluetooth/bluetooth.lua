@@ -371,8 +371,6 @@ local function update (bluetooth)
 
   end
 
-  -- bluetooth.items = devices_items
-
 end
 
 local function factory (args, theme)
@@ -473,14 +471,6 @@ local function factory (args, theme)
   bluetooth.timer:start ()
   bluetooth.timer:connect_signal ("timeout", update)
   -- }}}
-
-  -- local notify = curry (notify, battery)
-  -- battery.notify = notify
-
-  -- battery.widget:connect_signal("mouse::enter", notify)
-  -- battery.widget:connect_signal("mouse::leave", function()
-  --                                 naughty.destroy(battery.notification) end)
-
 
   return bluetooth
 end
