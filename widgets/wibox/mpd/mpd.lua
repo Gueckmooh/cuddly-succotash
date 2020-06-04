@@ -245,7 +245,10 @@ local function update (mpd)
 end
 
 local function toggle (mpd)
-  if mpd.control_mpv then
+  if not mpd.control_mpv then
+    awful.spawn.with_shell("mpc -p " .. mpd.port .. " toggle")
+    update (mpd)
+  else
     if mpd.infos.state == "play" then
       awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
       update (mpd)
@@ -260,7 +263,7 @@ local function toggle (mpd)
             update (mpd)
           else
             local cmd = string.format("echo 'cycle pause' | socat - %s", socket)
-            spawn.easy_async_with_shell(cmd, function (_, _, _, _) end)
+            awful.spawn.with_shell(cmd)
           end
       end)
     end
