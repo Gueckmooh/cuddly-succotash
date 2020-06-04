@@ -325,6 +325,87 @@ end
 
 
 
+local function next (mpd)
+  if not mpd.control_mpv then
+    awful.spawn.with_shell("mpc -p " .. mpd.port .. " next")
+    update (mpd)
+  else
+    if mpd.infos.state == "play" then
+      awful.spawn.with_shell("mpc -p " .. mpd.port .. " next")
+      update (mpd)
+    else
+      local cmd = [[ps aux | awk "$(printf '$2==%d {for(i=11;i<=NF;i++){printf "%%s ", $i}; printf "\\n"}' $(pidof mpv | awk '{print $1}'))"]]
+      spawn.easy_async_with_shell(
+        cmd,
+        function (stdout, stderr, reason, exit_code)
+          socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
+          if socket == nil then
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+            update (mpd)
+          else
+            local cmd = string.format([[echo 'playlist_next' | socat - %s]], socket)
+            awful.spawn.with_shell(cmd)
+          end
+      end)
+    end
+  end
+end
+
+
+
+local function prev (mpd)
+  if not mpd.control_mpv then
+    awful.spawn.with_shell("mpc -p " .. mpd.port .. " prev")
+    update (mpd)
+  else
+    if mpd.infos.state == "play" then
+      awful.spawn.with_shell("mpc -p " .. mpd.port .. " prev")
+      update (mpd)
+    else
+      local cmd = [[ps aux | awk "$(printf '$2==%d {for(i=11;i<=NF;i++){printf "%%s ", $i}; printf "\\n"}' $(pidof mpv | awk '{print $1}'))"]]
+      spawn.easy_async_with_shell(
+        cmd,
+        function (stdout, stderr, reason, exit_code)
+          socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
+          if socket == nil then
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+            update (mpd)
+          else
+            local cmd = string.format([[echo 'playlist_prev' | socat - %s]], socket)
+            awful.spawn.with_shell(cmd)
+          end
+      end)
+    end
+  end
+end
+
+
+local function stop (mpd)
+  if not mpd.control_mpv then
+    awful.spawn.with_shell("mpc -p " .. mpd.port .. " stop")
+    update (mpd)
+  else
+    if mpd.infos.state == "play" then
+      awful.spawn.with_shell("mpc -p " .. mpd.port .. " stop")
+      update (mpd)
+    else
+      local cmd = [[ps aux | awk "$(printf '$2==%d {for(i=11;i<=NF;i++){printf "%%s ", $i}; printf "\\n"}' $(pidof mpv | awk '{print $1}'))"]]
+      spawn.easy_async_with_shell(
+        cmd,
+        function (stdout, stderr, reason, exit_code)
+          socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
+          if socket == nil then
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+            update (mpd)
+          else
+            local cmd = string.format([[echo 'quit' | socat - %s]], socket)
+            awful.spawn.with_shell(cmd)
+          end
+      end)
+    end
+  end
+end
+
 local function factory (args, theme)
   mpd               = {}
 
@@ -358,6 +439,9 @@ local function factory (args, theme)
   mpd.toggle = toggle
   mpd.pause  = pause
   mpd.play   = play
+  mpd.next   = next
+  mpd.prev   = prev
+  mpd.stop   = stop
 
   local mpdh = string.format("telnet://%s:%s", mpd.host, mpd.port)
   local echo = string.format("printf \"%sstatus\\ncurrentsong\\nclose\\n\"", mpd.password)
