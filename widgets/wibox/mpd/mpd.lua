@@ -83,23 +83,23 @@ end
 
 
 local function get_cover (mpd)
-      local music_dir     = mpd.music_dir
-      local infos         = mpd.infos
-      local cover_pattern = mpd.cover_pattern
-      local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
-      local file = string.format ("%s/%s", music_dir, infos.file)
-      local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
-                                          path:gsub("'", "'\\''"), cover_pattern)
-      local icon = nil
-      -- local f = io.popen (cover, "r")
-      print (mpd.find_cover .. " " .. file)
-      local f = io.popen (mpd.find_cover .. " " .. file, "r")
-      local l = f:read "*a"
-      f:close ()
-      icon = l:gsub ("\n", "")
-      if #icon == 0 then icon = nil end
+  local music_dir     = mpd.music_dir
+  local infos         = mpd.infos
+  local cover_pattern = mpd.cover_pattern
+  local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
+  local file = string.format ("%s/%s", music_dir, infos.file)
+  local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
+                                      path:gsub("'", "'\\''"), cover_pattern)
+  local icon = nil
+  -- local f = io.popen (cover, "r")
+  print (mpd.find_cover .. " " .. file)
+  local f = io.popen (mpd.find_cover .. " " .. file, "r")
+  local l = f:read "*a"
+  f:close ()
+  icon = l:gsub ("\n", "")
+  if #icon == 0 then icon = nil end
 
-      return icon
+  return icon
 end
 
 local function notify (mpd, change)
