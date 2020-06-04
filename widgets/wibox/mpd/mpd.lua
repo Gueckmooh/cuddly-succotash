@@ -81,24 +81,25 @@ local function async(cmd, callback)
   end)
 end
 
-local function get_cover (mpd)
-  local music_dir     = mpd.music_dir
-  local infos         = mpd.infos
-  local cover_pattern = mpd.cover_pattern
-  local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
-  local file = string.format ("%s/%s", music_dir, infos.file)
-  local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
-                                      path:gsub("'", "'\\''"), cover_pattern)
-  local icon = nil
-  -- local f = io.popen (cover, "r")
-  print (mpd.find_cover .. " " .. file)
-  local f = io.popen (mpd.find_cover .. " " .. file, "r")
-  local l = f:read "*a"
-  f:close ()
-  icon = l:gsub ("\n", "")
-  if #icon == 0 then icon = nil end
 
-  return icon
+local function get_cover (mpd)
+      local music_dir     = mpd.music_dir
+      local infos         = mpd.infos
+      local cover_pattern = mpd.cover_pattern
+      local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
+      local file = string.format ("%s/%s", music_dir, infos.file)
+      local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
+                                          path:gsub("'", "'\\''"), cover_pattern)
+      local icon = nil
+      -- local f = io.popen (cover, "r")
+      print (mpd.find_cover .. " " .. file)
+      local f = io.popen (mpd.find_cover .. " " .. file, "r")
+      local l = f:read "*a"
+      f:close ()
+      icon = l:gsub ("\n", "")
+      if #icon == 0 then icon = nil end
+
+      return icon
 end
 
 local function notify (mpd, change)
@@ -243,6 +244,30 @@ local function update (mpd)
   end)
 end
 
+local function toggle (mpd)
+  if mpd.control_mpv then
+    if mpd.infos.state == "play" then
+      awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+      update (mpd)
+    else
+      local cmd = [[ps aux | awk "$(printf '$2==%d {for(i=11;i<=NF;i++){printf "%%s ", $i}; printf "\\n"}' $(pidof mpv | awk '{print $1}'))"]]
+      spawn.easy_async_with_shell(
+        cmd,
+        function (stdout, stderr, reason, exit_code)
+          socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
+          if socket == nil then
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " toggle")
+            update (mpd)
+          else
+            local cmd = string.format("echo 'cycle pause' | socat - %s", socket)
+            spawn.easy_async_with_shell(cmd, function (_, _, _, _) end)
+          end
+      end)
+    end
+  end
+end
+
+
 local function factory (args, theme)
   mpd               = {}
 
@@ -268,9 +293,12 @@ local function factory (args, theme)
   mpd.followtag     = args.followtag or false
   mpd.settings      = args.settings or function() end
   mpd.find_cover    = helpers.scripts_dir .. "mpd-get-cover.sh"
+  mpd.control_mpv   = args.control_mpv or false
 
   mpd.theme         = theme
   mpd.old_infos     = false
+
+  mpd.toggle = toggle
 
   local mpdh = string.format("telnet://%s:%s", mpd.host, mpd.port)
   local echo = string.format("printf \"%sstatus\\ncurrentsong\\nclose\\n\"", mpd.password)
