@@ -271,6 +271,34 @@ local function toggle (mpd)
 end
 
 
+local function pause (mpd)
+  if not mpd.control_mpv then
+    awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+    update (mpd)
+  else
+    if mpd.infos.state == "play" then
+      awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+      update (mpd)
+    else
+      local cmd = [[ps aux | awk "$(printf '$2==%d {for(i=11;i<=NF;i++){printf "%%s ", $i}; printf "\\n"}' $(pidof mpv | awk '{print $1}'))"]]
+      spawn.easy_async_with_shell(
+        cmd,
+        function (stdout, stderr, reason, exit_code)
+          socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
+          if socket == nil then
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+            update (mpd)
+          else
+            local cmd = string.format([[echo '{ "command": ["set_property", "pause", true] }' | socat - %s]], socket)
+            awful.spawn.with_shell(cmd)
+          end
+      end)
+    end
+  end
+end
+
+
+
 local function factory (args, theme)
   mpd               = {}
 
@@ -302,6 +330,7 @@ local function factory (args, theme)
   mpd.old_infos     = false
 
   mpd.toggle = toggle
+  mpd.pause = pause
 
   local mpdh = string.format("telnet://%s:%s", mpd.host, mpd.port)
   local echo = string.format("printf \"%sstatus\\ncurrentsong\\nclose\\n\"", mpd.password)
