@@ -340,7 +340,7 @@ local function next (mpd)
         function (stdout, stderr, reason, exit_code)
           socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
           if socket == nil then
-            awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " next")
             update (mpd)
           else
             local cmd = string.format([[echo 'playlist_next' | socat - %s]], socket)
@@ -368,7 +368,7 @@ local function prev (mpd)
         function (stdout, stderr, reason, exit_code)
           socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
           if socket == nil then
-            awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " prev")
             update (mpd)
           else
             local cmd = string.format([[echo 'playlist_prev' | socat - %s]], socket)
@@ -395,7 +395,7 @@ local function stop (mpd)
         function (stdout, stderr, reason, exit_code)
           socket = string.match (stdout, "%-%-input%-ipc%-server=([^ ]*)")
           if socket == nil then
-            awful.spawn.with_shell("mpc -p " .. mpd.port .. " pause")
+            awful.spawn.with_shell("mpc -p " .. mpd.port .. " stop")
             update (mpd)
           else
             local cmd = string.format([[echo 'quit' | socat - %s]], socket)
