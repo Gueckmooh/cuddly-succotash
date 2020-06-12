@@ -82,25 +82,7 @@ local function async(cmd, callback)
 end
 
 
-local function get_cover (mpd)
-  local music_dir     = mpd.music_dir
-  local infos         = mpd.infos
-  local cover_pattern = mpd.cover_pattern
-  local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
-  local file = string.format ("%s/%s", music_dir, infos.file)
-  local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
-                                      path:gsub("'", "'\\''"), cover_pattern)
-  local icon = nil
-  -- local f = io.popen (cover, "r")
-  print (mpd.find_cover .. " " .. file)
-  local f = io.popen (mpd.find_cover .. " " .. file, "r")
-  local l = f:read "*a"
-  f:close ()
-  icon = l:gsub ("\n", "")
-  if #icon == 0 then icon = nil end
 
-  return icon
-end
 
 local function notify (mpd, change)
   local infos = mpd.infos
@@ -108,6 +90,27 @@ local function notify (mpd, change)
   local message
 
   naughty.destroy(mpd.notification)
+
+  local music_dir     = mpd.music_dir
+  local file = string.format ("%s/%s", music_dir, infos.file)
+
+  if mpd.find_cover and mpd.cover_assoc[file] == nil then
+    local music_dir     = mpd.music_dir
+    local file = string.format ("%s/%s", music_dir, infos.file)
+    awful.spawn.easy_async_with_shell (
+      string.format ("%s %s", mpd.cover_finder, file),
+      function (stdout, stderr, reason, exit_code)
+        stdout = string.match(stdout, "[^\n]*")
+        if exit_code == 0 then
+          if mpd.notification then
+            mpd.notification.icon = stdout
+          end
+          mpd.cover_assoc[file] = stdout
+          notify (mpd)
+        end
+      end
+    )
+  end
 
   if infos.title ~= "N/A" then
     message = string.format (
@@ -124,8 +127,14 @@ local function notify (mpd, change)
   end
   local timeout = 0
   if change then timeout = 5 end
+  local cover = mpd.default_art
+
+  if mpd.find_cover then
+    cover = mpd.cover_assoc[file] or mpd.default_art
+  end
+  os.execute(string.format ("echo \"'%s'\" >> /tmp/popo", cover))
   mpd.notification = naughty.notify{
-    icon      = mpd.cover,
+    icon      = cover,
     icon_size = 100,
     title     = "Now playing",
     text      = message,
@@ -136,6 +145,10 @@ local function notify (mpd, change)
     width     = 300,
   }
 end
+
+
+
+
 
 local function update (mpd)
   local icon  = mpd.widget_icon
@@ -150,35 +163,11 @@ local function update (mpd)
       local changed = mpd.old_infos ~= false and (
         mpd.old_infos.state ~= mpd.infos.state or
           mpd.old_infos.file ~= mpd.infos.file)
-      ------------------------------ COVER ------------------------------
+      --------------------------- NOTIFICATION --------------------------
       if changed or mpd.old_infos == false then
-        mpd.cover = mpd.default_art
-
-        local music_dir     = mpd.music_dir
-        local infos         = mpd.infos
-        local cover_pattern = mpd.cover_pattern
-        -- local path          = string.format("%s/%s", music_dir, string.match(infos.file, ".*/"))
-        -- local cover         = string.format("find '%s' -maxdepth 1 -type f | egrep -i -m1 '%s'",
-        --                                     path:gsub("'", "'\\''"), cover_pattern)
-        local file = string.format ("%s/%s", music_dir, infos.file)
-        local cover = string.format ("%s '%s'", mpd.find_cover, file)
-
-        awful.spawn.easy_async_with_shell (
-          cover,
-          function (stdout, stderr, reason, exit_code)
-            if exit_code ~= 0 then
-              mpd.cover   = mpd.default_art
-            else
-              local icon = nil
-              local l = stdout
-              icon = l:gsub ("\n", "")
-              if #icon == 0 then icon = nil end
-              mpd.cover   = icon or mpd.default_art
-            end
-            if mpd.infos.state == "play" then
-              notify (mpd)
-            end
-        end)
+        if mpd.infos.state == "play" then
+          notify (mpd)
+        end
       end
       -------------------------------------------------------------------
       local infos = mpd.infos
@@ -237,11 +226,6 @@ local function update (mpd)
         text:set_text ("")
         icon:set_image (mpd.icon)
       end
-      -- if mpd.old_infos ~= false and (
-      --   mpd.old_infos.state ~= mpd.infos.state or
-      --   mpd.old_infos.file ~= mpd.infos.file) and mpd.infos.state == "play" then
-      --   notify (mpd, true)
-      -- end
       mpd.old_infos = mpd.infos
   end)
 end
@@ -424,7 +408,7 @@ local function factory (args, theme)
                          string.format("password %s\\n", args.password)) or ""
   mpd.host          = args.host or os.getenv("MPD_HOST") or "localhost"
   mpd.port          = args.port or os.getenv("MPD_PORT") or "6600"
-  mpd.music_dir     = args.music_dir or os.getenv("HOME") .. "/Music"
+  mpd.music_dir     = args.music_dir or os.getenv("HOME") .. "/Musics"
   mpd.cover_pattern = args.cover_pattern or "*\\.(jpg|jpeg|png|gif)$"
   mpd.cover_size    = args.cover_size or 100
   mpd.default_art   = args.default_art or theme.widget_music_default_art
@@ -432,7 +416,9 @@ local function factory (args, theme)
   mpd.notify        = args.notify or "on"
   mpd.followtag     = args.followtag or false
   mpd.settings      = args.settings or function() end
-  mpd.find_cover    = helpers.scripts_dir .. "mpd-get-cover.sh"
+  mpd.find_cover    = args.find_cover or false
+  mpd.cover_assoc   = {}
+  mpd.cover_finder  = helpers.scripts_dir .. "mpd-get-cover.sh"
   mpd.control_mpv   = args.control_mpv or false
 
   mpd.theme         = theme
