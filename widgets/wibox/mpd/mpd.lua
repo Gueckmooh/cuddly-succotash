@@ -107,6 +107,8 @@ local function notify (mpd, change)
   local theme = mpd.theme
   local message
 
+  naughty.destroy(mpd.notification)
+
   if infos.title ~= "N/A" then
     message = string.format (
       "%s - %s (%s)\n"..
