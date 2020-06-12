@@ -18,7 +18,7 @@ local helpers = {}
 
 helpers.cuddly_dir    = debug.getinfo(1, 'S').source:match[[^@(.*/).*$]]
 helpers.icons_dir     = helpers.cuddly_dir .. 'icons/'
-helpers.scripts_dir     = helpers.cuddly_dir .. 'scripts/'
+helpers.scripts_dir   = helpers.cuddly_dir .. 'scripts/'
 
 function helpers.get_widget_icons_dir ()
   local widget_dir    = debug.getinfo(1, 'S').source:match[[^@(.*/).*$]]

@@ -23,7 +23,23 @@ ICONFILE="$ICONDIR/$TMP"
 
 if test -f "$ICONFILE"
 then
-    echo $ICONFILE
+    echo -n $ICONFILE
+    exit 0
+fi
+
+FILE=$(find ${MP3FILE%/*} -maxdepth 1 -type f | egrep -i -m1 "$PATTERN")
+if test $? -eq 0
+then
+    cp "$FILE" "$ICONFILE"
+    EXIF=$(exiftool "$ICONFILE")
+    WIDTH=$(echo "$EXIF" | awk '/Image Width/ {print $4}')
+    HEIGHT=$(echo "$EXIF" | awk '/Image Height/ {print $4}')
+    if test "$WIDTH" -gt "$HEIGHT"
+    then
+        ADJUST=$((($WIDTH/2) - ($HEIGHT/2)))
+        convert "$ICONFILE" -crop "${HEIGHT}x${HEIGHT}+${ADJUST}+0" "$ICONFILE"
+    fi
+    echo -n $ICONFILE
     exit 0
 fi
 
@@ -37,8 +53,6 @@ then
         ADJUST=$((($WIDTH/2) - ($HEIGHT/2)))
         convert "$ICONFILE" -crop "${HEIGHT}x${HEIGHT}+${ADJUST}+0" "$ICONFILE"
     fi
-    echo $ICONFILE
+    echo -n $ICONFILE
     exit 0
 fi
-
-find ${MP3FILE%/*} -maxdepth 1 -type f | egrep -i -m1 "$PATTERN"
