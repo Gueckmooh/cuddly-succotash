@@ -8,6 +8,9 @@ local curry           = require "cuddly.util.functional".curry
 local helpers         = require "cuddly.helpers"
 local timer           = require "gears.timer"
 
+local get_battery_cmd = os.getenv ("XDG_CONFIG_HOME") .. "/awesome/" ..
+  debug.getinfo(1, 'S').source:match[[^@(.*/).*$]] .. "get-battery.sh"
+
 local battery = nil
 
 -- full: Battery 0: Full, 100% Adapter 0: on-line
@@ -17,7 +20,7 @@ local battery = nil
 local function update (battery)
   local text         = battery.widget_text
   local wicon        = battery.widget_icon
-  local cmd          = "echo $(acpi -b) // $(acpi -a)"
+  local cmd          = "bash " .. get_battery_cmd
   local matching_str = [[([^:]*): (%a*), (%d?%d?%d?)%%(.*)// ([^:]*): ([a-z-]*)]]
   local theme        = battery.theme
 
