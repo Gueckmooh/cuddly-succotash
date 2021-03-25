@@ -8,8 +8,7 @@ local curry           = require "cuddly.util.functional".curry
 local helpers         = require "cuddly.helpers"
 local timer           = require "gears.timer"
 
-local get_battery_cmd = os.getenv ("HOME") .. "/.config/awesome/" ..
-  debug.getinfo(1, 'S').source:match[[^@(.*/).*$]] .. "get-battery.sh"
+local get_battery_cmd = debug.getinfo(1, 'S').source:match[[^@(.*/).*$]] .. "get-battery.sh"
 
 local battery = nil
 
