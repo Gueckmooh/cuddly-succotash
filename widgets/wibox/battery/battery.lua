@@ -28,6 +28,9 @@ local function update (battery)
     function (stdout, stderr, reason, exit_code)
       local line = stdout
       local _, status, charge, remain, _, plugged = string.match (line, matching_str)
+      if status == nil then
+        return
+      end
       plugged = plugged == "on-line"
       charge = tonumber (charge)
 

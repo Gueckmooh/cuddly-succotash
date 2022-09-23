@@ -6,7 +6,8 @@ function progress.get_bar (percent, number)
   local i2 = number - i1
 
   local str = string.format ("[%s%s]",
-                             string.rep ("#", i1), string.rep ("-", i2))
+                             string.rep ("#", i1),
+                             string.rep ("-", i2))
 
   return str
 end

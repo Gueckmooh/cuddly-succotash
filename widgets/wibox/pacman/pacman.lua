@@ -15,8 +15,13 @@ local function get_packages (stdout, stderr, reason, exit_code)
 
   local l = {}
   for line in string.gmatch(stdout, "[^\n]+") do
-    local pack, from, to = string.match (line, "^([^ ]*) ([^ ]*) %-> ([^ ]*)$")
-    l[#l+1] = {pack = pack, from = from, to = to}
+    local pack, from, to, _ = string.match (line, "^([^ ]*) ([^ ]*) %-> ([^ ]*)$")
+    if pack ~= nil then
+      l[#l+1] = {pack = pack, from = from, to = to}
+    else
+      local pack, from, to, _ = string.match (line, "^([^ ]*) ([^ ]*) %-> ([^ ]*) %b[]$")
+      l[#l+1] = {pack = pack, from = from, to = to}
+    end
   end
   return l
 end

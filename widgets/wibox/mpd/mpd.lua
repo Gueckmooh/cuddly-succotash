@@ -98,7 +98,7 @@ local function notify (mpd, change)
     local music_dir     = mpd.music_dir
     local file = string.format ("%s/%s", music_dir, infos.file)
     awful.spawn.easy_async_with_shell (
-      string.format ("%s %s", mpd.cover_finder, file),
+      string.format ("%s '%s'", mpd.cover_finder, file),
       function (stdout, stderr, reason, exit_code)
         stdout = string.match(stdout, "[^\n]*")
         if exit_code == 0 then
@@ -132,7 +132,6 @@ local function notify (mpd, change)
   if mpd.find_cover then
     cover = mpd.cover_assoc[file] or mpd.default_art
   end
-  os.execute(string.format ("echo \"'%s'\" >> /tmp/popo", cover))
   mpd.notification = naughty.notify{
     icon      = cover,
     icon_size = 100,
@@ -485,6 +484,7 @@ local function factory (args, theme)
 
 end
 
+-- Returns an instance of the music player daemon widget
 local function get_instance ()
   return mpd
 end

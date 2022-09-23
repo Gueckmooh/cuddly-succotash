@@ -83,7 +83,10 @@ local function get_devices_infos (lines)
       elseif k == "LegacyConnected" then t.legacy = v == "yes"
       end
     end
-    devices_infos[t.name] = t
+    -- There is an error here sometimes
+    if t.name ~= nil then
+      devices_infos[t.name] = t
+    end
   end
 
   return devices_infos
